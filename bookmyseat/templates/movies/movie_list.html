@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Movies – BookMySeat{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:40px; padding-bottom:60px;">
+    <div class="page-header">
+        <h1 class="page-title">
+            {% if selected_genre %}{{ selected_genre.name }}
+            {% elif selected_language %}{{ selected_language.name }}
+            {% elif search %}Results for "{{ search }}"
+            {% else %}All <span style="color:var(--accent-red)">Movies</span>{% endif %}
+        </h1>
+        <p class="page-subtitle">{{ movies|length }} movie{{ movies|length|pluralize }} found</p>
+    </div>
+
+    <!-- FILTERS -->
+    <form method="get" id="filterForm" class="filters-bar">
+        <div class="filter-group">
+            <span class="filter-label"><i class="fas fa-tags"></i> Genre</span>
+            <select name="genre" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                <option value="">All Genres</option>
+                {% for genre in genres %}
+                <option value="{{ genre.id }}" {% if selected_genre.id == genre.id %}selected{% endif %}>{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+            <span class="filter-label"><i class="fas fa-language"></i> Language</span>
+            <select name="language" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                <option value="">All Languages</option>
+                {% for lang in languages %}
+                <option value="{{ lang.id }}" {% if selected_language.id == lang.id %}selected{% endif %}>{{ lang.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="search-input-bar">
+            <i class="fas fa-search" style="color:var(--text-muted);"></i>
+            <input type="text" name="search" placeholder="Search movies..." value="{{ search }}" id="searchInput">
+        </div>
+        {% if selected_genre or selected_language or search %}
+        <a href="{% url 'movie_list' %}" style="color:var(--accent-red); font-size:0.85rem; white-space:nowrap; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-times"></i> Clear
+        </a>
+        {% endif %}
+    </form>
+
+    <!-- RESULTS -->
+    {% if movies %}
+    <div class="movies-grid">
+        {% for movie in movies %}
+        <a href="{% url 'movie_detail' movie.pk %}" class="movie-card">
+            <div class="movie-poster">
+                {% with poster_url=movie.get_poster_url %}
+                {% if poster_url %}
+                    <img src="{{ poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                {% else %}
+                    <div class="poster-placeholder">
+                        <i class="fas fa-film film-icon"></i>
+                        <small>{{ movie.title }}</small>
+                    </div>
+                {% endif %}
+                {% endwith %}
+                {% if movie.imdb_score %}
+                <div class="movie-rating-badge"><i class="fas fa-star"></i> {{ movie.imdb_score }}</div>
+                {% endif %}
+                <div class="movie-overlay">
+                    <span class="overlay-btn"><i class="fas fa-ticket-alt"></i> Book Tickets</span>
+                </div>
+            </div>
+            <div class="movie-info">
+                <div class="movie-title">{{ movie.title }}</div>
+                <div class="movie-meta">
+                    <span>{{ movie.duration_display }}</span>
+                    <span>•</span>
+                    <span>{{ movie.rating }}</span>
+                </div>
+                <div class="movie-meta" style="margin-top:6px;">
+                    {% for genre in movie.genres.all|slice:":2" %}
+                    <span class="movie-genre-tag">{{ genre.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🎬</div>
+        <div class="empty-title">No movies found</div>
+        <p class="empty-text">Try changing your filters or search term.</p>
+        <a href="{% url 'movie_list' %}" class="btn-primary" style="display:inline-block;">Clear Filters</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit search after typing
+let searchTimeout;
+$('#searchInput').on('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+        $('#filterForm').submit();
+    }, 500);
+});
+</script>
+{% endblock %}

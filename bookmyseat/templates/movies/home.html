@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}BookMySeat – Book Movie Tickets Online{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+        <h1>BOOK YOUR<br><span>PERFECT SEAT</span></h1>
+        <p>Discover the latest blockbusters and secure your seats in seconds. No hassle, no queues.</p>
+        <form action="{% url 'movie_list' %}" method="get" class="search-bar">
+            <input type="text" name="search" placeholder="Search for movies, genres, languages...">
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+</section>
+
+<!-- NOW SHOWING -->
+<section class="section" style="background: var(--bg-primary);">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">NOW <span>SHOWING</span></h2>
+            <a href="{% url 'movie_list' %}" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        {% if now_showing %}
+        <div class="movies-grid">
+            {% for movie in now_showing %}
+            <a href="{% url 'movie_detail' movie.pk %}" class="movie-card">
+                <div class="movie-poster">
+                    {% if movie.poster or movie.trailer_youtube_id %}
+                        <img src="{{ movie.get_poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                    {% else %}
+                        <div class="poster-placeholder">
+                            <i class="fas fa-film film-icon"></i>
+                            <small>{{ movie.title }}</small>
+                        </div>
+                    {% endif %}
+                    <div class="movie-badge">Now Showing</div>
+                    {% if movie.imdb_score %}
+                    <div class="movie-rating-badge"><i class="fas fa-star"></i> {{ movie.imdb_score }}</div>
+                    {% endif %}
+                    <div class="movie-overlay">
+                        <span class="overlay-btn"><i class="fas fa-ticket-alt"></i> Book Tickets</span>
+                    </div>
+                </div>
+                <div class="movie-info">
+                    <div class="movie-title">{{ movie.title }}</div>
+                    <div class="movie-meta">
+                        <span>{{ movie.duration_display }}</span>
+                        <span>•</span>
+                        <span class="tag" style="padding:2px 6px;font-size:0.7rem;">{{ movie.rating }}</span>
+                    </div>
+                    <div class="movie-meta" style="margin-top:6px;">
+                        {% for genre in movie.genres.all|slice:":2" %}
+                        <span class="movie-genre-tag">{{ genre.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎬</div>
+            <div class="empty-title">No movies currently showing</div>
+            <p class="empty-text">Check back soon for new releases!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- COMING SOON -->
+{% if coming_soon %}
+<section class="section" style="background: var(--bg-secondary);">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">COMING <span>SOON</span></h2>
+        </div>
+        <div class="movies-grid">
+            {% for movie in coming_soon %}
+            <div class="movie-card">
+                <div class="movie-poster">
+                    {% if movie.poster or movie.trailer_youtube_id %}
+                        <img src="{{ movie.get_poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                    {% else %}
+                        <div class="poster-placeholder">
+                            <i class="fas fa-film film-icon"></i>
+                            <small>{{ movie.title }}</small>
+                        </div>
+                    {% endif %}
+                    <div class="movie-badge coming">Coming Soon</div>
+                </div>
+                <div class="movie-info">
+                    <div class="movie-title">{{ movie.title }}</div>
+                    <div class="movie-meta">
+                        <span>{{ movie.release_date|date:"d M Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- PROMO STRIP -->
+<section style="background: var(--accent-red); padding: 32px 0;">
+    <div class="container" style="text-align:center;">
+        <h3 style="font-family: var(--font-display); font-size: 1.8rem; letter-spacing:1px; margin-bottom:8px;">🎟️ FIRST CLASS MOVIE EXPERIENCE</h3>
+        <p style="color:rgba(255,255,255,0.85); margin-bottom:20px;">Book seats, choose your row, pay securely — all in under 2 minutes</p>
+        <a href="{% url 'movie_list' %}" style="background:#fff; color:var(--accent-red); padding:12px 32px; border-radius:50px; font-weight:700; font-size:0.95rem;">
+            Explore Movies →
+        </a>
+    </div>
+</section>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading...</div>
+</div>
+{% endblock %}

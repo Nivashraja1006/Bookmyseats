@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Select Seats – {{ show.movie.title }}{% endblock %}
+
+{% block content %}
+<div class="container seat-page">
+    <div style="margin-bottom:24px;">
+        <a href="{% url 'movie_detail' show.movie.pk %}" style="color:var(--text-muted);font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fas fa-arrow-left"></i> Back to showtimes
+        </a>
+    </div>
+
+    <div class="seat-layout">
+        <!-- LEFT: SEAT MAP -->
+        <div>
+            <div class="screen-container">
+                <div class="screen"></div>
+                <div class="screen-label">Screen This Way</div>
+            </div>
+
+            <!-- Legend -->
+            <div class="seat-legend">
+                <div class="legend-item"><div class="legend-box legend-available"></div> Available</div>
+                <div class="legend-item"><div class="legend-box legend-selected"></div> Selected</div>
+                <div class="legend-item"><div class="legend-box legend-booked"></div> Booked</div>
+                <div class="legend-item"><div class="legend-box legend-premium"></div> Premium</div>
+            </div>
+
+            <!-- Seat Map -->
+            <div class="seats-area">
+                {% for row_label, row_seats in rows.items %}
+                <div class="seat-row">
+                    <div class="row-label">{{ row_label }}</div>
+                    {% for seat in row_seats %}
+                    {% if forloop.counter == 5 or forloop.counter == 9 %}
+                    <div class="seat-gap"></div>
+                    {% endif %}
+                    <div class="seat {{ seat.seat_type }}
+                        {% if seat.is_booked %}booked
+                        {% elif seat.is_held and seat.seat_number not in held_by_me %}held
+                        {% else %}available{% endif %}"
+                        data-seat="{{ seat.seat_number }}"
+                        data-type="{{ seat.seat_type }}"
+                        data-price="{% if seat.seat_type == 'premium' %}{{ show.price_premium }}{% else %}{{ show.price_regular }}{% endif %}"
+                        title="Seat {{ seat.seat_number }}{% if seat.seat_type == 'premium' %} (Premium){% endif %}"
+                        onclick="toggleSeat(this)">
+                        <span class="seat-num">{{ seat.seat_number|slice:"1:" }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top:20px; padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:0.85rem; color:var(--text-muted);">
+                <i class="fas fa-info-circle" style="color:var(--accent-red);margin-right:8px;"></i>
+                Select up to <strong style="color:var(--text-primary);">10 seats</strong>. Selected seats are held for <strong style="color:var(--accent-red);">5 minutes</strong> after clicking "Proceed to Pay".
+            </div>
+        </div>
+
+        <!-- RIGHT: BOOKING SUMMARY -->
+        <div class="booking-summary">
+            <div class="summary-title">YOUR ORDER</div>
+
+            <div class="summary-movie">
+                <div class="summary-poster">
+                    {% if show.movie.poster or show.movie.trailer_youtube_id %}
+                    <img src="{{ show.movie.get_poster_url }}" alt="{{ show.movie.title }}">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.2rem;">🎬</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="summary-movie-title">{{ show.movie.title }}</div>
+                    <div class="summary-show-info">
+                        <div>{{ show.theater.name }}</div>
+                        <div>{{ show.show_time|date:"D, d M Y" }}</div>
+                        <div>{{ show.show_time|date:"g:i A" }}{% if show.language %} · {{ show.language.name }}{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-row">
+                <span class="label">Selected Seats</span>
+                <span class="value" id="selectedSeatsText">None</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Seat Type</span>
+                <span class="value" id="seatTypeText">–</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Regular ₹{{ show.price_regular }}</span>
+                <span class="value" id="regularCount">0 × ₹{{ show.price_regular }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Premium ₹{{ show.price_premium }}</span>
+                <span class="value" id="premiumCount">0 × ₹{{ show.price_premium }}</span>
+            </div>
+
+            <div class="summary-divider"></div>
+            <div class="summary-row">
+                <span class="label" style="font-weight:600;">Total Amount</span>
+                <span class="value summary-total" id="totalAmount">₹0</span>
+            </div>
+
+            <!-- Countdown Timer -->
+            <div class="countdown-timer" id="countdownTimer">
+                <div class="timer-label">⏰ Seats held for</div>
+                <div class="timer-value" id="timerValue">05:00</div>
+            </div>
+
+            <button class="btn-book" id="proceedBtn" disabled onclick="proceedToPayment()">
+                <i class="fas fa-lock"></i> Select Seats to Continue
+            </button>
+
+            <button style="width:100%;padding:12px;margin-top:8px;background:transparent;border:1px solid #ffd60a;color:#ffd60a;border-radius:8px;font-weight:600;cursor:pointer;" onclick="demoBooking()">⚡ Demo Booking (Skip Payment)</button>
+        </div>
+    </div>
+</div>
+
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Processing...</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SHOW_ID = {{ show.id }};
+const RAZORPAY_KEY = '{{ razorpay_key }}';
+const PRICE_REGULAR = {{ show.price_regular }};
+const PRICE_PREMIUM = {{ show.price_premium }};
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+let selectedSeats = new Set();
+let holdTimer = null;
+let holdEndTime = null;
+
+function toggleSeat(el) {
+    if (el.classList.contains('booked') || el.classList.contains('held')) return;
+    const seatNum = el.dataset.seat;
+
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        el.classList.add('available');
+        selectedSeats.delete(seatNum);
+    } else {
+        if (selectedSeats.size >= 10) {
+            alert('You can select maximum 10 seats at once.');
+            return;
+        }
+        el.classList.remove('available');
+        el.classList.add('selected');
+        selectedSeats.add(seatNum);
+    }
+    updateSummary();
+}
+
+function updateSummary() {
+    const seats = Array.from(selectedSeats);
+    let regular = 0, premium = 0;
+    seats.forEach(sn => {
+        const el = document.querySelector(`.seat[data-seat="${sn}"]`);
+        if (el && el.dataset.type === 'premium') premium++;
+        else regular++;
+    });
+
+    const total = (regular * PRICE_REGULAR) + (premium * PRICE_PREMIUM);
+    document.getElementById('selectedSeatsText').textContent = seats.length > 0 ? seats.join(', ') : 'None';
+    document.getElementById('regularCount').textContent = `${regular} × ₹${PRICE_REGULAR}`;
+    document.getElementById('premiumCount').textContent = `${premium} × ₹${PRICE_PREMIUM}`;
+    document.getElementById('totalAmount').textContent = `₹${total.toFixed(2)}`;
+
+    const types = [];
+    if (regular > 0) types.push('Regular');
+    if (premium > 0) types.push('Premium');
+    document.getElementById('seatTypeText').textContent = types.join(' + ') || '–';
+
+    const btn = document.getElementById('proceedBtn');
+    if (seats.length > 0) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-lock"></i> Pay ₹${total.toFixed(2)} for ${seats.length} Seat${seats.length > 1 ? 's' : ''}`;
+    } else {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-lock"></i> Select Seats to Continue';
+    }
+}
+
+async function demoBooking(){
+    if(!selectedSeats.size){alert('Select seats first');return;}
+    showLoading('Booking...');
+    const r=await fetch('/bookings/demo-booking/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},body:JSON.stringify({seats:Array.from(selectedSeats),show_id:SHOW_ID})});
+    const d=await r.json();
+    hideLoading();
+    if(d.success)window.location.href=d.redirect;
+    else alert(d.error);
+}
+
+async function proceedToPayment() {
+    const seats = Array.from(selectedSeats);
+    if (!seats.length) return;
+
+    if (RAZORPAY_KEY.startsWith('rzp_test_your') || !RAZORPAY_KEY) {
+        alert('Payment gateway not configured.\n\nPlease add your real Razorpay test keys to the .env file.\n\nGet free keys at: razorpay.com → Settings → API Keys');
+        return;
+    }
+
+    showLoading('Holding your seats...');
+    try {
+        const holdRes = await fetch('/bookings/hold-seats/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify({ seats, show_id: SHOW_ID })
+        });
+
+        if (!holdRes.ok) {
+            if (holdRes.status === 401 || holdRes.status === 403) {
+                hideLoading();
+                alert('Session expired. Please log in again.');
+                window.location.href = '/users/login/?next=/movies/';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${holdRes.status}`);
+        }
+
+        const holdData = await holdRes.json();
+
+        if (!holdData.success) {
+            hideLoading();
+            alert(holdData.error || 'Failed to hold seats. Please try again.');
+            window.location.reload();
+            return;
+        }
+
+        // Start countdown
+        holdEndTime = new Date(holdData.hold_until);
+        startCountdown();
+
+        // Create Razorpay order
+        const orderRes = await fetch('/bookings/create-order/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify({ seats, show_id: SHOW_ID })
+        });
+        const orderData = await orderRes.json();
+        hideLoading();
+
+        if (!orderData.success) {
+            const error = orderData.error || 'Failed to create order. Please try again.';
+            const isConfigError = orderData.configuration_error || orderData.authentication_error;
+            
+            if (isConfigError) {
+                showErrorModal(error);
+            } else {
+                alert(error);
+            }
+            return;
+        }
+
+        // Open Razorpay
+        const options = {
+            key: RAZORPAY_KEY,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: 'BookMySeat',
+            description: `{{ show.movie.title }} – ${seats.length} Seat${seats.length > 1 ? 's' : ''}`,
+            order_id: orderData.order_id,
+            prefill: { name: orderData.name, email: orderData.email, contact: orderData.phone },
+            theme: { color: '#e63946' },
+            handler: async function(response) {
+                showLoading('Confirming your booking...');
+                const callbackRes = await fetch('/bookings/payment-callback/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        booking_id: orderData.booking_id
+                    })
+                });
+                const cbData = await callbackRes.json();
+                hideLoading();
+                if (cbData.success) {
+                    window.location.href = cbData.redirect;
+                } else {
+                    alert('Payment verification failed: ' + cbData.error);
+                }
+            },
+            modal: {
+                ondismiss: function() {
+                    console.log('Payment modal dismissed');
+                }
+            }
+        };
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function(response) {
+            hideLoading();
+            alert('Payment failed: ' + response.error.description);
+        });
+        rzp.open();
+
+    } catch (err) {
+        hideLoading();
+        console.error('Error details:', err);
+        if (err instanceof SyntaxError) {
+            alert('Session expired. Please log in again.');
+            window.location.href = '/users/login/?next=/movies/';
+        } else {
+            alert('Something went wrong. Please try again.');
+        }
+        console.error(err);
+    }
+}
+
+function startCountdown() {
+    const timerDiv = document.getElementById('countdownTimer');
+    const timerVal = document.getElementById('timerValue');
+    timerDiv.style.display = 'block';
+
+    if (holdTimer) clearInterval(holdTimer);
+    holdTimer = setInterval(function() {
+        const now = new Date();
+        const diff = holdEndTime - now;
+        if (diff <= 0) {
+            clearInterval(holdTimer);
+            timerVal.textContent = '00:00';
+            timerDiv.style.background = 'rgba(230,57,70,0.2)';
+            alert('Your seat hold has expired. Please reselect your seats.');
+            window.location.reload();
+            return;
+        }
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        timerVal.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        if (diff < 60000) {
+            timerVal.style.color = '#ff4444';
+        }
+    }, 1000);
+}
+</script>
+{% endblock %}

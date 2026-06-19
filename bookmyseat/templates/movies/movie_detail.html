@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ movie.title }} – BookMySeat{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<style>
+.shows-date-group { display: none; }
+.shows-date-group.active { display: block; }
+</style>
+<section class="movie-hero">
+    {% with poster_url=movie.get_poster_url %}
+    {% if poster_url %}
+    <div class="movie-hero-bg" style="background-image: url('{{ poster_url }}');"></div>
+    {% endif %}
+    {% endwith %}
+    <div class="movie-hero-overlay"></div>
+    <div class="container" style="width:100%;">
+        <div class="movie-hero-content">
+                <div class="movie-detail-poster">
+                {% with poster_url=movie.get_poster_url %}
+                {% if poster_url %}
+                    <img src="{{ poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                {% else %}
+                    <div class="poster-placeholder" style="aspect-ratio:2/3; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:var(--text-muted);">
+                        <i class="fas fa-film" style="font-size:3rem; opacity:0.3;"></i>
+                        <small style="text-align:center; padding:0 8px;">{{ movie.title }}</small>
+                    </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div class="movie-detail-info">
+                <div class="movie-tags">
+                    {% if movie.is_now_showing %}
+                    <span class="tag" style="background:rgba(230,57,70,0.15);border-color:var(--border-accent);color:var(--accent-red);">Now Showing</span>
+                    {% endif %}
+                </div>
+                <h1 class="movie-detail-title">{{ movie.title }}</h1>
+                <div class="movie-tags">
+                    <span class="tag rating-tag">{{ movie.rating }}</span>
+                    {% if movie.imdb_score %}
+                    <span class="tag imdb-tag"><i class="fas fa-star"></i> {{ movie.imdb_score }} IMDb</span>
+                    {% endif %}
+                    <span class="tag"><i class="fas fa-clock"></i> {{ movie.duration_display }}</span>
+                    <span class="tag">{{ movie.release_date|date:"d M Y" }}</span>
+                </div>
+                <div class="movie-tags">
+                    {% for genre in movie.genres.all %}
+                    <span class="tag">{{ genre.name }}</span>
+                    {% endfor %}
+                </div>
+                <div class="movie-tags">
+                    {% for lang in movie.languages.all %}
+                    <span class="tag" style="opacity:0.7;font-size:0.75rem;">{{ lang.name }}</span>
+                    {% endfor %}
+                </div>
+                <p class="movie-detail-desc">{{ movie.description }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SHOWS SECTION -->
+<div class="container">
+    <div class="shows-section">
+        <h2 class="section-title" style="margin-bottom:24px;">BOOK <span>TICKETS</span></h2>
+
+        {% if shows_by_date %}
+        <!-- Date Tabs -->
+        <div class="date-tabs">
+            {% for date in date_range %}
+            <div class="date-tab {% if date in shows_by_date %}{% if forloop.first or date == today %}active{% endif %}{% else %}{% if not forloop.first %}style='opacity:0.4;pointer-events:none;'{% endif %}{% endif %}"
+                 data-date="{{ date|date:'Y-m-d' }}"
+                 data-date="{{ date|date:'Y-m-d' }}">
+                <span class="day-name">{% if date == today %}Today{% else %}{{ date|date:"D" }}{% endif %}</span>
+                <span class="day-date">{{ date|date:"d M" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Shows per date -->
+        {% for date, shows in shows_by_date.items %}
+        <div class="shows-date-group{% if forloop.first %} active{% endif %}" id="date-{{ date|date:'Y-m-d' }}">
+            <div class="shows-grid">
+                {% regroup shows by theater as theater_shows %}
+                {% for theater_group in theater_shows %}
+                <div class="show-group">
+                    <div class="show-group-header">
+                        <div>
+                            <div class="theater-name">{{ theater_group.grouper.name }}</div>
+                            <div class="theater-location"><i class="fas fa-map-marker-alt" style="font-size:0.7rem;"></i> {{ theater_group.grouper.location }}, {{ theater_group.grouper.city }}</div>
+                        </div>
+                        {% if theater_group.grouper.amenities %}
+                        <div class="theater-amenities" style="margin-left:auto;">
+                            <span class="amenity-tag">{{ theater_group.grouper.amenities }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="show-times">
+                        {% for show in theater_group.list %}
+                        <a href="{% url 'seat_selection' show.id %}" class="show-time-btn">
+                            {{ show.show_time|date:"g:i A" }}
+                            <span class="price-hint">From ₹{{ show.price_regular }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% else %}
+        <div class="no-shows">
+            <i class="fas fa-calendar-times" style="font-size:3rem; opacity:0.3; margin-bottom:12px; display:block;"></i>
+            <p>No shows available for this movie currently.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- TRAILER -->
+    {% with embed_url=movie.get_trailer_embed_url watch_url=movie.get_trailer_watch_url %}
+    {% if embed_url %}
+    <div class="trailer-section">
+        <h2 class="section-title" style="margin-bottom:20px;">WATCH <span>TRAILER</span></h2>
+        <div class="trailer-wrapper">
+            <iframe id="trailer-iframe" data-src="{{ embed_url }}"
+                title="{{ movie.title }} Trailer"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                loading="lazy">
+            </iframe>
+        </div>
+        <div style="margin-top:12px; text-align:center;">
+            <a href="{{ watch_url }}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="padding:10px 18px; font-size:0.95rem;">
+                Watch on YouTube
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDate(dateStr) {
+    document.querySelectorAll('.shows-date-group').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.date-tab').forEach(el => el.classList.remove('active'));
+    const group = document.getElementById('date-' + dateStr);
+    if (group) group.classList.add('active');
+    document.querySelectorAll('.date-tab[data-date="' + dateStr + '"]').forEach(el => el.classList.add('active'));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.date-tab[data-date]').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            showDate(this.getAttribute('data-date'));
+        });
+    });
+});
+</script>
+<script>
+// Set trailer iframe src with runtime origin to avoid YouTube player config errors
+document.addEventListener('DOMContentLoaded', function(){
+    var ifr = document.getElementById('trailer-iframe');
+    if(ifr && ifr.dataset && ifr.dataset.src){
+        var src = ifr.dataset.src;
+        if(src){
+            var sep = src.indexOf('?') === -1 ? '?' : '&';
+            try{
+                src = src + sep + 'origin=' + encodeURIComponent(location.origin);
+            } catch(e){
+                src = src + sep + 'origin=' + encodeURIComponent(window.location.protocol + '//' + window.location.host);
+            }
+            ifr.src = src;
+        }
+    }
+});
+</script>
+{% endblock %}

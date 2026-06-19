@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile – BookMySeat{% endblock %}
+
+{% block content %}
+<div class="container profile-page">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-avatar-lg">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            {% else %}
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+            {% endif %}
+        </div>
+        <div>
+            <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="profile-email">{{ user.email }}</div>
+            {% if user.phone %}<div class="profile-email"><i class="fas fa-phone" style="font-size:0.8rem;"></i> {{ user.phone }}</div>{% endif %}
+            <a href="{% url 'profile_update' %}" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;color:var(--accent-red);font-size:0.88rem;">
+                <i class="fas fa-edit"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px;">
+        <div class="stat-card" style="padding:20px;text-align:center;">
+            <div style="font-family:var(--font-display);font-size:2rem;color:var(--accent-red);">{{ bookings|length }}</div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Total Bookings</div>
+        </div>
+        <div class="stat-card" style="padding:20px;text-align:center;">
+            <div style="font-family:var(--font-display);font-size:2rem;color:var(--accent-gold);">
+                {% with confirmed=bookings|length %}{{ confirmed }}{% endwith %}
+            </div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Tickets Booked</div>
+        </div>
+        <div class="stat-card" style="padding:20px;text-align:center;">
+            <div style="font-family:var(--font-display);font-size:2rem;color:#2ecc71;">
+                {{ user.date_joined|date:"Y" }}
+            </div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;">Member Since</div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <h2 class="section-title" style="margin-bottom:20px;">RECENT <span>BOOKINGS</span></h2>
+    {% if bookings %}
+    <div class="bookings-list">
+        {% for booking in bookings|slice:":5" %}
+        <div class="booking-card">
+            <div class="booking-poster">
+                {% if booking.show.movie.poster or booking.show.movie.trailer_youtube_id %}
+                <img src="{{ booking.show.movie.get_poster_url }}" alt="{{ booking.show.movie.title }}">
+                {% else %}
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.5rem;">🎬</div>
+                {% endif %}
+            </div>
+            <div class="booking-info">
+                <div class="booking-movie">{{ booking.show.movie.title }}</div>
+                <div class="booking-meta">
+                    <div><i class="fas fa-theater-masks"></i> {{ booking.show.theater.name }}</div>
+                    <div><i class="fas fa-calendar"></i> {{ booking.show.show_time|date:"d M Y, g:i A" }}</div>
+                    <div><i class="fas fa-chair"></i> {{ booking.seat_numbers }}</div>
+                </div>
+            </div>
+            <div class="booking-right">
+                <div class="booking-amount">₹{{ booking.total_amount }}</div>
+                <span class="status-badge status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if bookings|length > 5 %}
+    <div style="text-align:center;margin-top:20px;">
+        <a href="{% url 'my_bookings' %}" style="color:var(--accent-red);font-weight:500;">View All Bookings →</a>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🎟️</div>
+        <div class="empty-title">No Bookings Yet</div>
+        <a href="{% url 'movie_list' %}" class="btn-primary" style="display:inline-block;padding:12px 28px;margin-top:16px;">Browse Movies</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

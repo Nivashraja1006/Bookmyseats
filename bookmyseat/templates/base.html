@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BookMySeat – Your Movie Destination{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{% url 'home' %}" class="nav-logo">
+            <span class="logo-icon">🎬</span>
+            <span class="logo-text">BookMySeat</span>
+        </a>
+        <div class="nav-links">
+            <a href="{% url 'movie_list' %}" class="nav-link">Movies</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'my_bookings' %}" class="nav-link">My Bookings</a>
+                {% if user.is_staff %}
+                    <a href="{% url 'admin_dashboard' %}" class="nav-link nav-admin"><i class="fas fa-chart-bar"></i> Dashboard</a>
+                {% endif %}
+                <div class="nav-user-menu">
+                    <button class="nav-user-btn" id="userMenuBtn">
+                        <span class="user-avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</span>
+                        <span>{{ user.first_name|default:user.email }}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="{% url 'profile' %}"><i class="fas fa-user"></i> Profile</a>
+                        <a href="{% url 'my_bookings' %}"><i class="fas fa-ticket-alt"></i> My Bookings</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'logout' %}" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-link">Login</a>
+                <a href="{% url 'register' %}" class="btn-primary-sm">Sign Up</a>
+            {% endif %}
+        </div>
+        <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+    </div>
+</nav>
+
+<!-- MESSAGES -->
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible">
+        <span>{{ message }}</span>
+        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <div class="footer-logo">🎬 BookMySeat</div>
+            <p>Your ultimate movie booking experience. Book tickets for the latest blockbusters in just a few clicks.</p>
+        </div>
+        <div class="footer-links">
+            <h4>Quick Links</h4>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'movie_list' %}">Movies</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'my_bookings' %}">My Bookings</a>
+            <a href="{% url 'profile' %}">Profile</a>
+            {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+            {% endif %}
+        </div>
+        <div class="footer-info">
+            <h4>Powered By</h4>
+            <p><i class="fas fa-film"></i> Django 3.2</p>
+            <p><i class="fas fa-credit-card"></i> Razorpay Payments</p>
+            <p><i class="fas fa-envelope"></i> Gmail SMTP</p>
+            <p><i class="fab fa-python"></i> Python</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2024 BookMySeat. Built with ❤️ for movie lovers.</p>
+    </div>
+</footer>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

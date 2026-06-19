@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookings – BookMySeat{% endblock %}
+
+{% block content %}
+<div class="container bookings-page">
+    <div class="page-header">
+        <h1 class="page-title">MY <span style="color:var(--accent-red)">BOOKINGS</span></h1>
+        <p class="page-subtitle">{{ bookings|length }} booking{{ bookings|length|pluralize }} total</p>
+    </div>
+
+    {% if bookings %}
+    <div class="bookings-list">
+        {% for booking in bookings %}
+        <div class="booking-card">
+            <div class="booking-poster">
+                {% if booking.show.movie.poster or booking.show.movie.trailer_youtube_id %}
+                <img src="{{ booking.show.movie.get_poster_url }}" alt="{{ booking.show.movie.title }}">
+                {% else %}
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.5rem;">🎬</div>
+                {% endif %}
+            </div>
+            <div class="booking-info">
+                <div class="booking-movie">{{ booking.show.movie.title }}</div>
+                <div class="booking-meta">
+                    <div><i class="fas fa-theater-masks"></i> {{ booking.show.theater.name }}, {{ booking.show.theater.city }}</div>
+                    <div><i class="fas fa-calendar"></i> {{ booking.show.show_time|date:"D, d M Y" }} at {{ booking.show.show_time|date:"g:i A" }}</div>
+                    <div><i class="fas fa-chair"></i> {{ booking.seat_numbers }} ({{ booking.seat_count }} ticket{{ booking.seat_count|pluralize }})</div>
+                    {% if booking.show.language %}<div><i class="fas fa-language"></i> {{ booking.show.language.name }}</div>{% endif %}
+                    <div><i class="fas fa-hashtag"></i> {{ booking.booking_id }}</div>
+                </div>
+            </div>
+            <div class="booking-right">
+                <div class="booking-amount">₹{{ booking.total_amount }}</div>
+                <div><span class="status-badge status-{{ booking.status }}">{{ booking.get_status_display }}</span></div>
+                {% if booking.status == 'confirmed' %}
+                <form method="post" action="{% url 'cancel_booking' booking.booking_id %}" style="margin-top:8px;"
+                      onsubmit="return confirm('Are you sure you want to cancel this booking?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-cancel-sm">Cancel</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🎟️</div>
+        <div class="empty-title">No Bookings Yet</div>
+        <p class="empty-text">You haven't booked any tickets. Start exploring movies!</p>
+        <a href="{% url 'movie_list' %}" class="btn-primary" style="display:inline-block;padding:12px 28px;">Browse Movies</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

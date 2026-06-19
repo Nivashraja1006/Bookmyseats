@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Booking Confirmed – {{ booking.booking_id }}{% endblock %}
+
+{% block content %}
+<div class="container confirmation-page">
+    <div class="confirmation-card">
+        <div class="confirmation-header">
+            <div class="success-icon">✅</div>
+            <h2>BOOKING CONFIRMED!</h2>
+            <p>Your tickets have been booked successfully{% if booking.email_sent %} and a confirmation has been sent to your email{% endif %}.</p>
+        </div>
+        <div class="confirmation-body">
+            <div class="booking-id-badge">
+                🎟️ {{ booking.booking_id }}
+            </div>
+            <div class="ticket-details">
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-film"></i> Movie</span>
+                    <span class="detail-value">{{ booking.show.movie.title }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-theater-masks"></i> Theater</span>
+                    <span class="detail-value">{{ booking.show.theater.name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-map-marker-alt"></i> Location</span>
+                    <span class="detail-value">{{ booking.show.theater.location }}, {{ booking.show.theater.city }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-calendar"></i> Date</span>
+                    <span class="detail-value">{{ booking.show.show_time|date:"l, d F Y" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-clock"></i> Show Time</span>
+                    <span class="detail-value">{{ booking.show.show_time|date:"g:i A" }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-chair"></i> Seats</span>
+                    <span class="detail-value">{{ booking.seat_numbers }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-users"></i> Tickets</span>
+                    <span class="detail-value">{{ booking.seat_count }} ticket{{ booking.seat_count|pluralize }}</span>
+                </div>
+                {% if booking.show.language %}
+                <div class="detail-row">
+                    <span class="detail-label"><i class="fas fa-language"></i> Language</span>
+                    <span class="detail-value">{{ booking.show.language.name }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-row" style="border-bottom:none;">
+                    <span class="detail-label" style="font-weight:600;">Total Paid</span>
+                    <span class="detail-value" style="color:var(--accent-red);font-size:1.1rem;font-weight:700;">₹{{ booking.total_amount }}</span>
+                </div>
+            </div>
+
+            {% if booking.razorpay_payment_id %}
+            <p style="font-size:0.78rem;color:var(--text-muted);text-align:center;margin-bottom:20px;">
+                <i class="fas fa-shield-alt"></i> Payment ID: {{ booking.razorpay_payment_id }}
+            </p>
+            {% endif %}
+
+            <div class="confirmation-actions">
+                <a href="{% url 'my_bookings' %}" class="btn-outline">My Bookings</a>
+                <a href="{% url 'home' %}" class="btn-primary">Book More</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
