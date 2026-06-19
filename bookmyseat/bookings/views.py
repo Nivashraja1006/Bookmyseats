@@ -196,14 +196,12 @@ def create_order_view(request):
         })
     except Exception as e:
         error_msg = str(e)
-        # Check if it's an authentication error
         if any(auth_error in error_msg.lower() for auth_error in ['unauthorized', '401', 'authentication', 'invalid api key', 'invalid credentials']):
             return JsonResponse({
                 'success': False,
                 'error': 'Razorpay authentication failed. Please configure your API keys in the .env file.',
                 'authentication_error': True
             })
-        # Check for connection errors
         if any(conn_error in error_msg.lower() for conn_error in ['connection', 'timeout', 'network', 'refused']):
             return JsonResponse({
                 'success': False,
@@ -225,33 +223,29 @@ def payment_callback_view(request):
 
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
-    # Verify signature
     try:
         key_secret = settings.RAZORPAY_KEY_SECRET.encode('utf-8')
         msg = f"{razorpay_order_id}|{razorpay_payment_id}".encode('utf-8')
         generated_signature = hmac.new(key_secret, msg, hashlib.sha256).hexdigest()
 
         if generated_signature == razorpay_signature:
-            # Payment verified
             booking.status = 'confirmed'
             booking.razorpay_payment_id = razorpay_payment_id
             booking.razorpay_signature = razorpay_signature
             booking.save()
 
-            # Mark seats as booked
             for seat in booking.seats.all():
                 seat.is_booked = True
                 seat.is_held = False
                 seat.held_until = None
                 seat.save()
 
-            # Send confirmation email
             try:
                 send_booking_confirmation_email(booking)
                 booking.email_sent = True
                 booking.save()
             except Exception as e:
-                pass  # Email failure shouldn't block booking confirmation
+                pass
 
             return JsonResponse({'success': True, 'redirect': f'/bookings/confirmation/{booking.booking_id}/'})
         else:
@@ -302,9 +296,20 @@ def demo_booking_view(request):
     import json, uuid
     data = json.loads(request.body)
     show = get_object_or_404(Show, id=data.get('show_id'))
-    seats = show.seats.filter(seat_number__in=data.get('seats',[]))
-    total = sum(float(show.price_premium) if s.seat_type=='premium' else float(show.price_regular) for s in seats)
-    booking = Booking.objects.create(user=request.user, show=show, total_amount=total, status='confirmed', razorpay_order_id='DEMO_'+uuid.uuid4().hex[:6].upper(), razorpay_payment_id='PAY_'+uuid.uuid4().hex[:6].upper())
+    seats = show.seats.filter(seat_number__in=data.get('seats', []))
+    total = sum(float(show.price_premium) if s.seat_type == 'premium' else float(show.price_regular) for s in seats)
+    booking = Booking.objects.create(
+        user=request.user,
+        show=show,
+        total_amount=total,
+        status='confirmed',
+        razorpay_order_id='DEMO_' + uuid.uuid4().hex[:6].upper(),
+        razorpay_payment_id='PAY_' + uuid.uuid4().hex[:6].upper()
+    )
     booking.seats.set(seats)
     seats.update(is_booked=True, is_held=False, held_until=None)
-    return JsonResponse({'success':True,'redirect':f'/bookings/confirmation/{booking.booking_id}/'})
+    try:
+        send_booking_confirmation_email(booking)
+    except Exception:
+        pass
+    return JsonResponse({'success': True, 'redirect': f'/bookings/confirmation/{booking.booking_id}/'})
