@@ -9,7 +9,10 @@
         <div class="confirmation-header">
             <div class="success-icon">✅</div>
             <h2>BOOKING CONFIRMED!</h2>
-            <p>Your tickets have been booked successfully{% if booking.email_sent %} and a confirmation has been sent to your email{% endif %}.</p>
+            <p>Your tickets have been booked successfully.</p>
+            <p style="color:#4CAF50; font-size:0.9rem; margin-top:8px;">
+                <i class="fas fa-envelope"></i> A confirmation email has been sent to <strong>{{ booking.user.email }}</strong>
+            </p>
         </div>
         <div class="confirmation-body">
             <div class="booking-id-badge">

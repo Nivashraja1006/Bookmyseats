@@ -17,7 +17,7 @@ import hashlib
 
 def get_or_create_seats(show):
     """Auto-create seats for a show if they don't exist."""
-    if not show.seats.exists():
+    if not Seat.objects.filter(show=show).exists():
         generate_seats_for_show(show)
 
 
@@ -27,10 +27,10 @@ def seat_selection_view(request, show_id):
     get_or_create_seats(show)
 
     # Release expired holds
-    expired = show.seats.filter(is_held=True, held_until__lte=timezone.now())
+    expired = Seat.objects.filter(show=show, is_held=True, held_until__lte=timezone.now())
     expired.update(is_held=False, held_until=None, held_by_session='')
 
-    seats = show.seats.all().order_by('seat_number')
+    seats = Seat.objects.filter(show=show).order_by('seat_number')
 
     # Organize seats into rows
     rows = {}
@@ -45,7 +45,7 @@ def seat_selection_view(request, show_id):
         request.session.create()
         session_key = request.session.session_key
 
-    held_by_me = show.seats.filter(is_held=True, held_by_session=session_key).values_list('seat_number', flat=True)
+    held_by_me = Seat.objects.filter(show=show, is_held=True, held_by_session=session_key).values_list('seat_number', flat=True)
 
     return render(request, 'bookings/seat_selection.html', {
         'show': show,
@@ -75,18 +75,20 @@ def hold_seats_view(request):
         request.session.create()
         session_key = request.session.session_key
 
+    show_seats = Seat.objects.filter(show=show)
+
     # Release previous holds by this session
-    show.seats.filter(is_held=True, held_by_session=session_key).update(
+    show_seats.filter(is_held=True, held_by_session=session_key).update(
         is_held=False, held_until=None, held_by_session=''
     )
 
     # Release expired holds
-    show.seats.filter(is_held=True, held_until__lte=timezone.now()).update(
+    show_seats.filter(is_held=True, held_until__lte=timezone.now()).update(
         is_held=False, held_until=None, held_by_session=''
     )
 
     # Try to hold new seats
-    seats = show.seats.filter(seat_number__in=seat_numbers)
+    seats = show_seats.filter(seat_number__in=seat_numbers)
     unavailable = []
     for seat in seats:
         if not seat.is_available():
@@ -127,7 +129,8 @@ def create_order_view(request):
     show = get_object_or_404(Show, id=show_id)
     session_key = request.session.session_key
 
-    seats = show.seats.filter(
+    seats = Seat.objects.filter(
+        show=show,
         seat_number__in=seat_numbers,
         is_held=True,
         held_by_session=session_key
@@ -162,7 +165,8 @@ def create_order_view(request):
 
     try:
         client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
-        order = client.order.create({
+        order_resource = getattr(client, 'order')
+        order = order_resource.create({
             'amount': amount_paise,
             'currency': 'INR',
             'payment_capture': 1,
@@ -188,7 +192,7 @@ def create_order_view(request):
             'order_id': order['id'],
             'amount': amount_paise,
             'currency': 'INR',
-            'booking_id': booking.id,
+            'booking_id': booking.pk,
             'key': settings.RAZORPAY_KEY_ID,
             'name': request.user.get_full_name() or request.user.email,
             'email': request.user.email,
@@ -296,7 +300,7 @@ def demo_booking_view(request):
     import json, uuid
     data = json.loads(request.body)
     show = get_object_or_404(Show, id=data.get('show_id'))
-    seats = show.seats.filter(seat_number__in=data.get('seats', []))
+    seats = Seat.objects.filter(show=show, seat_number__in=data.get('seats', []))
     total = sum(float(show.price_premium) if s.seat_type == 'premium' else float(show.price_regular) for s in seats)
     booking = Booking.objects.create(
         user=request.user,
