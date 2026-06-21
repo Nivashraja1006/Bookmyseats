@@ -45,32 +45,6 @@ class Command(BaseCommand):
         # Movies
         movies_data = [
             {
-                'title': 'Mufasa: The Lion King',
-                'description': 'The origin story of Mufasa, exploring his journey from orphaned cub to one of the most beloved kings in the Pride Lands.',
-                'duration': 118,
-                'release_date': timezone.now().date() - timedelta(days=3),
-                'rating': 'U',
-                'imdb_score': 7.1,
-                'trailer_youtube_id': 'O5GpGTLLl38',
-                'song_teaser_youtube_id': 'O5GpGTLLl38',
-                'is_now_showing': True,
-                'genre_names': ['Animation', 'Drama'],
-                'lang_names': ['Hindi', 'English', 'Tamil'],
-            },
-            {
-                'title': 'Devara Part 1',
-                'description': 'A fearless man builds a legacy of respect in coastal Andhra, but his son must face a new era of challenges and danger.',
-                'duration': 166,
-                'release_date': timezone.now().date() - timedelta(days=15),
-                'rating': 'UA',
-                'imdb_score': 6.8,
-                'trailer_youtube_id': 'R8yGwCnf_ZA',
-                'song_teaser_youtube_id': 'R8yGwCnf_ZA',
-                'is_now_showing': True,
-                'genre_names': ['Action', 'Drama'],
-                'lang_names': ['Telugu', 'Hindi', 'Tamil'],
-            },
-            {
                 'title': 'Oppenheimer',
                 'description': 'The story of J. Robert Oppenheimer, the theoretical physicist who helped develop the first nuclear weapons during World War II.',
                 'duration': 180,
@@ -111,7 +85,7 @@ class Command(BaseCommand):
             },
             {
                 'title': '29',
-                'description': 'A coming-of-age romantic drama about a man lost in the search for his identity who spends his life chasing answers. Starring Vidhu and Preethi Asrani, directed by Rathna Kumar and produced by Karthik Subbaraj and Lokesh Kanagaraj under Stone Bench Creations and G Squad.',
+                'description': 'A coming-of-age romantic drama about a man lost in the search for his identity who spends his life chasing answers. Starring Vidhu and Preethi Asrani, directed by Rathna Kumar and produced by Karthik Subbaraj and Lokesh Kanagaraj.',
                 'duration': 150,
                 'release_date': timezone.now().date() - timedelta(days=43),
                 'rating': 'UA',
@@ -124,7 +98,7 @@ class Command(BaseCommand):
             },
             {
                 'title': 'Youth',
-                'description': 'A feel-good romantic comedy about Praveen, a carefree 16-year-old boy who enters adolescence determined to find the love of his life before school ends. Written, directed and performed by Ken Karunas with music by GV Prakash Kumar. A blockbuster family entertainer.',
+                'description': 'A feel-good romantic comedy about Praveen, a carefree 16-year-old boy determined to find the love of his life before school ends. Written, directed and performed by Ken Karunas with music by GV Prakash Kumar.',
                 'duration': 141,
                 'release_date': timezone.now().date() - timedelta(days=93),
                 'rating': 'U',
@@ -133,6 +107,58 @@ class Command(BaseCommand):
                 'song_teaser_youtube_id': 'X83zWEDRbCU',
                 'is_now_showing': True,
                 'genre_names': ['Comedy', 'Romance', 'Drama'],
+                'lang_names': ['Tamil', 'Telugu', 'Hindi'],
+            },
+            {
+                'title': 'Double Occupancy',
+                'description': 'Rajini, due to an anomaly during birth, lives as a female from 6am to 6pm and as a male from 6pm to 6am. This unique gender-swap fantasy romantic comedy explores the hilarious complications when Rajini tries to hide this condition from two different partners. Directed by Aswin Kandasamy with music by Sam C.S.',
+                'duration': 130,
+                'release_date': timezone.now().date() - timedelta(days=9),
+                'rating': 'UA',
+                'imdb_score': 7.2,
+                'trailer_youtube_id': '6QNUFgR2HLk',
+                'song_teaser_youtube_id': '6QNUFgR2HLk',
+                'is_now_showing': True,
+                'genre_names': ['Comedy', 'Romance'],
+                'lang_names': ['Tamil'],
+            },
+            {
+                'title': 'Nooru Saami',
+                'description': 'A powerful Tamil drama about a woman fighting for her rights and dignity in a village dominated by caste and patriarchy. Starring Vijay Antony, Swasika, Ajay Dhishan and Lijomol Jose in pivotal roles. Directed by Sasi with music by Balaji Sriram.',
+                'duration': 131,
+                'release_date': timezone.now().date() - timedelta(days=2),
+                'rating': 'UA',
+                'imdb_score': 7.3,
+                'trailer_youtube_id': '3EGuYn0_VXc',
+                'song_teaser_youtube_id': '3EGuYn0_VXc',
+                'is_now_showing': True,
+                'genre_names': ['Drama'],
+                'lang_names': ['Tamil'],
+            },
+            {
+                'title': 'Parimala and Co',
+                'description': 'A dysfunctional family becomes prime suspects in a murder connected to their household. Starring Jayaram, Urvashi, Mysskin, Yogi Babu and Sandy in this black comedy thriller directed by Pandiraaj. The family\'s peaceful life is disrupted when a local rowdy begins harassing their younger daughter.',
+                'duration': 146,
+                'release_date': timezone.now().date() - timedelta(days=16),
+                'rating': 'UA',
+                'imdb_score': 6.8,
+                'trailer_youtube_id': 'KPliGJj6In4',
+                'song_teaser_youtube_id': 'KPliGJj6In4',
+                'is_now_showing': True,
+                'genre_names': ['Comedy', 'Thriller'],
+                'lang_names': ['Tamil'],
+            },
+            {
+                'title': 'Engal Thangam',
+                'description': 'In a deeply traditional household, a quiet woman struggles to find acceptance while harboring a dark hidden past. When unexpected danger from her former life threatens her new family, she must shed her docile exterior. Starring Samantha Ruth Prabhu and Gulshan Devaiah, directed by Nandini Reddy with music by Santhosh Narayanan.',
+                'duration': 154,
+                'release_date': timezone.now().date() - timedelta(days=2),
+                'rating': 'UA',
+                'imdb_score': 7.6,
+                'trailer_youtube_id': 'smfHL8sgBEU',
+                'song_teaser_youtube_id': 'smfHL8sgBEU',
+                'is_now_showing': True,
+                'genre_names': ['Action', 'Thriller', 'Drama'],
                 'lang_names': ['Tamil', 'Telugu', 'Hindi'],
             },
             {
@@ -179,7 +205,7 @@ class Command(BaseCommand):
             },
             {
                 'title': 'Om Chapter 1',
-                'description': 'A fearless guardian fights armed assailants in a rain-soaked forest to protect innocent villagers. Starring Dhanush, Mammootty, Sai Pallavi and Sreeleela, this high-octane action drama explores social unrest, economic turmoil and revolution. Directed by Rajkumar Periasamy.',
+                'description': 'A fearless guardian fights armed assailants in a rain-soaked forest to protect innocent villagers. Starring Dhanush, Mammootty, Sai Pallavi and Sreeleela, this high-octane action drama explores social unrest and revolution. Directed by Rajkumar Periasamy.',
                 'duration': 0,
                 'release_date': timezone.now().date() + timedelta(days=118),
                 'rating': 'UA',
@@ -193,7 +219,7 @@ class Command(BaseCommand):
             },
             {
                 'title': 'Cars 4',
-                'description': 'Lightning McQueen and his friends are back for an all-new adventure! Blindsided by a new generation of blazing-fast electric racers, the legendary Lightning McQueen must adapt or be left behind. A thrilling Disney Pixar sequel with heart and speed.',
+                'description': 'Lightning McQueen and his friends are back for an all-new adventure! Blindsided by a new generation of blazing-fast electric racers, the legendary Lightning McQueen must adapt or be left behind. A thrilling Disney Pixar sequel.',
                 'duration': 0,
                 'release_date': timezone.now().date() + timedelta(days=150),
                 'rating': 'U',
@@ -275,7 +301,6 @@ class Command(BaseCommand):
 
         self.stdout.write('  ✓ Shows created')
 
-        # Create superuser if not exists
         if not CustomUser.objects.filter(email='admin@bookmyseat.com').exists():
             CustomUser.objects.create_superuser(
                 username='admin',
@@ -286,7 +311,6 @@ class Command(BaseCommand):
             )
             self.stdout.write('  ✓ Superuser created: admin@bookmyseat.com / admin123')
 
-        # Create demo user for testing
         if not CustomUser.objects.filter(email='demo@bms.com').exists():
             CustomUser.objects.create_user(
                 username='demo',
